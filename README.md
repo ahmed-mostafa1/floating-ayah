@@ -18,6 +18,12 @@ Run the frontend shell in browser mode:
 npm run dev
 ```
 
+Generate the local development SQLite database:
+
+```bash
+npm run db:generate
+```
+
 Run the Tauri app after installing the Rust toolchain and Tauri prerequisites:
 
 ```bash

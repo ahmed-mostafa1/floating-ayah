@@ -61,3 +61,17 @@ export async function getNextAyah(current: Ayah): Promise<Ayah> {
   );
   return mockAyahs[(currentIndex + 1) % mockAyahs.length];
 }
+
+export async function getPreviousAyah(current: Ayah): Promise<Ayah> {
+  if (isTauri) {
+    return invoke<Ayah>("get_previous_ayah", {
+      currentSurahId: current.surahId,
+      currentAyahId: current.ayahId,
+    });
+  }
+
+  const currentIndex = mockAyahs.findIndex(
+    (ayah) => ayah.surahId === current.surahId && ayah.ayahId === current.ayahId,
+  );
+  return mockAyahs[(currentIndex - 1 + mockAyahs.length) % mockAyahs.length];
+}

@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 1420",
+    "db:generate": "python scripts/generate_db.py --input scripts/seed-quran.tsv --allow-sample",
+    "db:download": "python scripts/generate_db.py --download",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri"

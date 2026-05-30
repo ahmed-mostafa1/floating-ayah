@@ -1,5 +1,6 @@
 import { useEffect, useState, useTransition } from "react";
-import { getAppState, getNextAyah } from "./tauri";
+import { getAppState, getNextAyah, getPreviousAyah } from "./tauri";
+import { Notification } from "./Notification";
 import type { AppSettings, Ayah } from "./types";
 
 type LoadState = "loading" | "ready" | "error";
@@ -49,6 +50,17 @@ function App() {
     });
   }
 
+  function handlePreviousAyah() {
+    if (!ayah) {
+      return;
+    }
+
+    startTransition(async () => {
+      const previousAyah = await getPreviousAyah(ayah);
+      setAyah(previousAyah);
+    });
+  }
+
   if (loadState === "loading") {
     return <main className="app-shell status-shell">Loading Noor Remind...</main>;
   }
@@ -71,37 +83,16 @@ function App() {
       </section>
 
       <section className="workspace-grid">
-        <article className="card notification-preview" aria-label="Current Ayah preview">
-          <div className="card-header">
-            <div>
-              <p className="eyebrow">Current Ayah</p>
-              <h2>
-                {ayah.surahName} {ayah.surahId}:{ayah.ayahId}
-              </h2>
-            </div>
-            <span className="countdown">{settings.autoDismissSeconds}s</span>
-          </div>
-
-          <p className="ayah-text" dir="rtl" lang="ar">
-            {ayah.textUthmani}
-          </p>
-          <p className="translation-text">{ayah.textEnglish}</p>
-
-          <div className="progress-track" aria-hidden="true">
-            <div className="progress-fill" />
-          </div>
-
-          <div className="button-row">
-            <button type="button" className="secondary-button">
-              Previous
-            </button>
-            <button type="button" className="primary-button" onClick={handleNextAyah} disabled={isPending}>
-              {isPending ? "Loading..." : "Next Ayah"}
-            </button>
-            <button type="button" className="secondary-button">
-              Copy
-            </button>
-          </div>
+        <article className="notification-preview-panel" aria-label="Notification preview">
+          <p className="eyebrow" style={{ marginBottom: "18px" }}>Notification Preview</p>
+          <Notification
+            ayah={ayah}
+            settings={settings}
+            onNext={handleNextAyah}
+            onPrevious={handlePreviousAyah}
+            onDismiss={() => handleNextAyah()}
+            isPending={isPending}
+          />
         </article>
 
         <aside className="card settings-card" aria-label="Reminder settings summary">
