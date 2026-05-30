@@ -1,0 +1,17 @@
+[package]
+name = "noor-remind"
+version = "0.1.0"
+description = "Offline Quran reminder desktop app"
+authors = ["Noor Remind Contributors"]
+edition = "2021"
+license = "Apache-2.0"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = [] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
