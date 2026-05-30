@@ -1,0 +1,95 @@
+use std::time::Duration;
+use tauri::{AppHandle, Emitter, LogicalPosition, Manager};
+
+use crate::{
+    db::QuranDb,
+    settings::{AppStore, AyahReference},
+};
+
+pub fn start(app: AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        loop {
+            let interval_minutes = app
+                .state::<AppStore>()
+                .settings()
+                .map(|s| s.interval_minutes)
+                .unwrap_or(30);
+
+            tokio::time::sleep(Duration::from_secs(u64::from(interval_minutes) * 60)).await;
+
+            let paused = app
+                .state::<AppStore>()
+                .settings()
+                .map(|s| s.pause_until != "none")
+                .unwrap_or(false);
+
+            if paused {
+                continue;
+            }
+
+            advance_ayah(&app);
+            show_notification(&app);
+        }
+    });
+}
+
+fn advance_ayah(app: &AppHandle) {
+    let db = app.state::<QuranDb>();
+    let store = app.state::<AppStore>();
+
+    if let Ok(current) = store.current_ayah() {
+        if let Ok(next) = db.next_ayah(current.surah_id, current.ayah_id) {
+            let _ = store.set_current_ayah(AyahReference {
+                surah_id: next.surah_id,
+                ayah_id: next.ayah_id,
+            });
+        }
+    }
+}
+
+pub fn show_notification(app: &AppHandle) {
+    let window = match app.get_webview_window("notification") {
+        Some(w) => w,
+        None => return,
+    };
+
+    if let Err(e) = position_window(app, &window) {
+        eprintln!("Failed to position notification window: {e}");
+    }
+
+    let _ = window.show();
+    let _ = window.emit("notification-show", ());
+}
+
+fn position_window(app: &AppHandle, window: &tauri::WebviewWindow) -> Result<(), String> {
+    let settings = app
+        .state::<AppStore>()
+        .settings()
+        .unwrap_or_default();
+
+    let monitor = window
+        .primary_monitor()
+        .map_err(|e| e.to_string())?
+        .ok_or("no primary monitor")?;
+
+    let physical = monitor.size();
+    let scale = monitor.scale_factor();
+    let screen_w = physical.width as f64 / scale;
+    let screen_h = physical.height as f64 / scale;
+
+    let win_w = 436.0_f64;
+    let win_h = 300.0_f64;
+    let margin = 16.0_f64;
+    let taskbar = 48.0_f64;
+
+    let (x, y) = match settings.position.as_str() {
+        "bottom-left" => (margin, screen_h - win_h - margin - taskbar),
+        "top-right" => (screen_w - win_w - margin, margin),
+        "top-left" => (margin, margin),
+        _ => (screen_w - win_w - margin, screen_h - win_h - margin - taskbar),
+    };
+
+    window
+        .set_position(LogicalPosition::new(x, y))
+        .map_err(|e| e.to_string())
+}

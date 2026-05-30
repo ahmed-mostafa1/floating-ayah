@@ -1,15 +1,18 @@
 import { useEffect, useState, useTransition } from "react";
 import { getAppState, getNextAyah, getPreviousAyah } from "./tauri";
 import { Notification } from "./Notification";
+import { Settings } from "./Settings";
 import type { AppSettings, Ayah } from "./types";
 
 type LoadState = "loading" | "ready" | "error";
+type Tab = "reminder" | "settings";
 
 function App() {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [ayah, setAyah] = useState<Ayah | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("reminder");
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -17,19 +20,13 @@ function App() {
 
     getAppState()
       .then((state) => {
-        if (cancelled) {
-          return;
-        }
-
+        if (cancelled) return;
         setSettings(state.settings);
         setAyah(state.currentAyah);
         setLoadState("ready");
       })
       .catch((error: unknown) => {
-        if (cancelled) {
-          return;
-        }
-
+        if (cancelled) return;
         setErrorMessage(error instanceof Error ? error.message : "Unable to load app state.");
         setLoadState("error");
       });
@@ -40,93 +37,122 @@ function App() {
   }, []);
 
   function handleNextAyah() {
-    if (!ayah) {
-      return;
-    }
-
+    if (!ayah) return;
     startTransition(async () => {
-      const nextAyah = await getNextAyah(ayah);
-      setAyah(nextAyah);
+      setAyah(await getNextAyah(ayah));
     });
   }
 
   function handlePreviousAyah() {
-    if (!ayah) {
-      return;
-    }
-
+    if (!ayah) return;
     startTransition(async () => {
-      const previousAyah = await getPreviousAyah(ayah);
-      setAyah(previousAyah);
+      setAyah(await getPreviousAyah(ayah));
     });
   }
 
   if (loadState === "loading") {
-    return <main className="app-shell status-shell">Loading Noor Remind...</main>;
+    return <main className="app-shell status-shell">Loading…</main>;
   }
 
   if (loadState === "error" || !settings || !ayah) {
-    return <main className="app-shell status-shell">{errorMessage ?? "Noor Remind could not start."}</main>;
+    return (
+      <main className="app-shell status-shell">
+        {errorMessage ?? "Noor Remind could not start."}
+      </main>
+    );
   }
 
   return (
     <main className="app-shell">
-      <section className="hero-panel">
-        <div>
-          <p className="eyebrow">Noor Remind</p>
-          <h1>Sequential Quran reminders, offline by design.</h1>
-          <p className="hero-copy">
-            This first implementation establishes the Tauri bridge, settings model, and reminder card layout before the database and tray timer are wired in.
-          </p>
+      <header className="app-header">
+        <div className="app-brand">
+          <span className="app-brand-dot" />
+          <span className="app-brand-name">Noor Remind</span>
         </div>
-        <div className="status-pill">MVP foundation</div>
-      </section>
+        <nav className="app-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "reminder"}
+            className={`app-tab ${tab === "reminder" ? "app-tab-active" : ""}`}
+            onClick={() => setTab("reminder")}
+          >
+            Reminder
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "settings"}
+            className={`app-tab ${tab === "settings" ? "app-tab-active" : ""}`}
+            onClick={() => setTab("settings")}
+          >
+            Settings
+          </button>
+        </nav>
+        <div className="app-header-fill" />
+      </header>
 
-      <section className="workspace-grid">
-        <article className="notification-preview-panel" aria-label="Notification preview">
-          <p className="eyebrow" style={{ marginBottom: "18px" }}>Notification Preview</p>
-          <Notification
-            ayah={ayah}
-            settings={settings}
-            onNext={handleNextAyah}
-            onPrevious={handlePreviousAyah}
-            onDismiss={() => handleNextAyah()}
-            isPending={isPending}
-          />
-        </article>
+      {tab === "reminder" && (
+        <section className="workspace-grid">
+          <article className="notification-preview-panel" aria-label="Notification preview">
+            <p className="eyebrow" style={{ marginBottom: "18px" }}>Preview</p>
+            <Notification
+              ayah={ayah}
+              settings={settings}
+              onNext={handleNextAyah}
+              onPrevious={handlePreviousAyah}
+              onDismiss={handleNextAyah}
+              isPending={isPending}
+            />
+          </article>
 
-        <aside className="card settings-card" aria-label="Reminder settings summary">
-          <p className="eyebrow">Settings</p>
-          <h2>Default reminder behavior</h2>
+          <aside className="card settings-card" aria-label="Reminder settings summary">
+            <p className="eyebrow">Current Settings</p>
+            <h2>Active configuration</h2>
+            <dl className="settings-list">
+              <div>
+                <dt>Interval</dt>
+                <dd>{settings.intervalMinutes} min</dd>
+              </div>
+              <div>
+                <dt>Auto-dismiss</dt>
+                <dd>{settings.autoDismissSeconds}s</dd>
+              </div>
+              <div>
+                <dt>Position</dt>
+                <dd>{settings.position.replace("-", " ")}</dd>
+              </div>
+              <div>
+                <dt>Auto start</dt>
+                <dd>{settings.autoStart ? "On" : "Off"}</dd>
+              </div>
+              <div>
+                <dt>Do Not Disturb</dt>
+                <dd>{settings.suppressDuringFullscreen ? "On" : "Off"}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>{settings.pauseUntil === "none" ? "Active" : "Paused"}</dd>
+              </div>
+            </dl>
+            <button
+              type="button"
+              className="secondary-button"
+              style={{ marginTop: "20px", width: "100%" }}
+              onClick={() => setTab("settings")}
+            >
+              Edit Settings
+            </button>
+          </aside>
+        </section>
+      )}
 
-          <dl className="settings-list">
-            <div>
-              <dt>Interval</dt>
-              <dd>{settings.intervalMinutes} minutes</dd>
-            </div>
-            <div>
-              <dt>Auto-dismiss</dt>
-              <dd>{settings.autoDismissSeconds} seconds</dd>
-            </div>
-            <div>
-              <dt>Position</dt>
-              <dd>{settings.position.replace("-", " ")}</dd>
-            </div>
-            <div>
-              <dt>Auto start</dt>
-              <dd>{settings.autoStart ? "Enabled" : "Disabled"}</dd>
-            </div>
-            <div>
-              <dt>Do Not Disturb</dt>
-              <dd>{settings.suppressDuringFullscreen ? "Suppress fullscreen" : "Always show"}</dd>
-            </div>
-            <div>
-              <dt>Pause</dt>
-              <dd>{settings.pauseUntil === "none" ? "Not paused" : settings.pauseUntil}</dd>
-            </div>
-          </dl>
-        </aside>
-      </section>
+      {tab === "settings" && (
+        <Settings
+          settings={settings}
+          onUpdate={(next) => setSettings(next)}
+        />
+      )}
     </main>
   );
 }

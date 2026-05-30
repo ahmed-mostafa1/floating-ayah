@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { AppState, Ayah } from "./types";
+import type { AppSettings, AppState, Ayah } from "./types";
 
 const mockAyahs: Ayah[] = [
   {
@@ -74,4 +74,17 @@ export async function getPreviousAyah(current: Ayah): Promise<Ayah> {
     (ayah) => ayah.surahId === current.surahId && ayah.ayahId === current.ayahId,
   );
   return mockAyahs[(currentIndex - 1 + mockAyahs.length) % mockAyahs.length];
+}
+
+export async function updateSettings(settings: AppSettings): Promise<AppSettings> {
+  if (isTauri) {
+    return invoke<AppSettings>("update_settings", { settings });
+  }
+  return settings;
+}
+
+export async function dismissNotification(): Promise<void> {
+  if (isTauri) {
+    return invoke("dismiss_notification");
+  }
 }
