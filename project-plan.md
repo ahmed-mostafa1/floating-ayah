@@ -37,10 +37,10 @@ The goal is to build "Noor-Remind" (placeholder name), a lightweight, offline-fi
 *   **Completed:** Global Ayah progress counter in notification (e.g., "42 / 6236").
 *   **Completed:** App icon generated for Windows (`src-tauri/icons/icon.ico`).
 *   **Pending:** Fullscreen detection for Do Not Disturb (settings toggle exists; detection logic not yet implemented in `timer.rs`).
-*   **Pending:** KFGQPC Uthman Taha Naskh font file — needs to be sourced and placed in `public/assets/fonts/KFGQPC_Uthman_Taha_Naskh.ttf`.
-*   **Pending:** Global keyboard shortcut for manual trigger (`tauri-plugin-global-shortcut`).
-*   **Pending:** Graceful error fallback UI for database read failures.
-*   **Pending:** Build pipeline verification (`.msi`/`.exe`/`.dmg`/`.AppImage`).
+*   **Completed:** KFGQPC Uthman Taha Naskh font (OTF) bundled at `public/assets/fonts/KFGQPC_Uthman_Taha_Naskh.otf`.
+*   **Completed:** Global keyboard shortcut `Ctrl+Shift+A` via `tauri-plugin-global-shortcut` (non-fatal if key is taken).
+*   **Completed:** Graceful error states — branded loading card, red error card with message; notification silently dismisses on DB error.
+*   **Completed:** Build pipeline — `npm run tauri build` produces `.msi` (4.8 MB) and NSIS `.exe` (3.4 MB) on Windows.
 
 ## Implementation Steps
 
