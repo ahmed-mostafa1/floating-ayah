@@ -57,7 +57,13 @@ export function Notification({ ayah, settings, onNext, onPrevious, onDismiss, is
           <span className="notif-surah">{ayah.surahName}</span>
           <span className="notif-ref">{ayah.surahId}:{ayah.ayahId}</span>
         </div>
-        <div className="notif-timer-ring" aria-label={`Dismissing in ${secondsLeft} seconds`}>
+        <button
+          type="button"
+          className="notif-timer-ring notif-timer-ring-btn"
+          onClick={onDismiss}
+          aria-label={`Dismiss — closes in ${secondsLeft}s`}
+          title="Dismiss"
+        >
           <svg viewBox="0 0 36 36" className="notif-ring-svg">
             <circle cx="18" cy="18" r="15.9" className="notif-ring-track" />
             <circle
@@ -69,7 +75,7 @@ export function Notification({ ayah, settings, onNext, onPrevious, onDismiss, is
             />
           </svg>
           <span className="notif-timer-label">{secondsLeft}</span>
-        </div>
+        </button>
       </div>
 
       <p className="notif-arabic" dir="rtl" lang="ar" style={arabicStyle(settings.fontFamily)}>
