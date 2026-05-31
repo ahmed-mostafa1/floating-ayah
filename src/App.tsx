@@ -51,13 +51,23 @@ function App() {
   }
 
   if (loadState === "loading") {
-    return <main className="app-shell status-shell">Loading…</main>;
+    return (
+      <main className="app-shell status-shell">
+        <div className="status-card">
+          <span className="app-brand-dot" style={{ width: 14, height: 14 }} />
+          <span>Loading Noor Remind…</span>
+        </div>
+      </main>
+    );
   }
 
   if (loadState === "error" || !settings || !ayah) {
     return (
       <main className="app-shell status-shell">
-        {errorMessage ?? "Noor Remind could not start."}
+        <div className="status-card status-card-error">
+          <strong>Could not start</strong>
+          <p>{errorMessage ?? "Noor Remind encountered an unexpected error."}</p>
+        </div>
       </main>
     );
   }
@@ -143,6 +153,9 @@ function App() {
             >
               Edit Settings
             </button>
+            <p className="shortcut-hint" style={{ marginTop: "auto", paddingTop: "16px" }}>
+              Press <kbd>Ctrl+Shift+A</kbd> to show a reminder instantly
+            </p>
           </aside>
         </section>
       )}

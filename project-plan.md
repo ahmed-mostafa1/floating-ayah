@@ -68,18 +68,21 @@ The goal is to build "Noor-Remind" (placeholder name), a lightweight, offline-fi
 1. **Settings Dashboard:** Interval, auto-dismiss, position grid, font selector, autostart toggle, DND toggle, pause controls, Start Point picker. **Done.**
 2. **Notification Floating Card:** Glassmorphism card, Arabic text (RTL), English translation, progress ring timer, auto-dismiss progress bar, Ayah counter (X/6236), Next/Prev/Copy buttons. Dynamic Arabic font from settings. **Done.**
 
-### Phase 5: Polish & Deployment
-1. **Global Shortcuts:** `tauri-plugin-global-shortcut` for manual triggering. **Pending.**
-2. **Graceful Errors:** Fallback UI for database read failures. **Pending.**
-3. **DNF Detection:** Implement platform-specific fullscreen detection in `timer.rs`. **Pending.**
-4. **KFGQPC Font:** Source and bundle `KFGQPC_Uthman_Taha_Naskh.ttf`. **Pending.**
-5. **Build Pipelines:** Configure for `.msi`/`.exe` (Windows), `.dmg` (macOS), `.AppImage` (Linux). **Pending — need to run `npm run tauri build`.**
-6. **Platform Behavior QA:** Validate startup, tray, window positioning, installer. **Pending.**
+### Phase 5: Polish & Deployment ✅ (Windows)
+1. **Global Shortcuts:** `tauri-plugin-global-shortcut` added; `Ctrl+Shift+A` triggers next ayah immediately (non-fatal if key combo is taken by another app). **Done.**
+2. **Graceful Errors:** Loading state shows a branded card; error state shows red-bordered card with message. NotificationWindow silently dismisses on DB error. **Done.**
+3. **DNF Detection:** Windows fullscreen detection implemented in `timer.rs` using `windows-sys` (Win32_UI_WindowsAndMessaging + Win32_Graphics_Gdi). No-op stub for non-Windows. **Done.**
+4. **KFGQPC Font:** Not yet sourced. Falls back to "Amiri" (AmiriQuran.ttf) and system Arabic fonts. **Pending.**
+5. **Build Pipelines:** `npm run tauri build` produces two Windows installers. **Done.**
+   - `Noor Remind_0.1.0_x64_en-US.msi` (4.8 MB) — Windows Installer
+   - `Noor Remind_0.1.0_x64-setup.exe` (3.4 MB) — NSIS installer
+6. **Platform Behavior QA:** Windows build confirmed. macOS and Linux builds pending (need respective build environments). **Partially done.**
 
 ## Verification & Testing
 *   **Frontend Build:** `npm run build` — **Passing.**
 *   **Database Generation:** `npm run db:download` — **Passing (6236 ayahs).**
-*   **Rust Check:** `cargo check` from `src-tauri` — **In progress (MSVC Build Tools now installed).**
+*   **Rust Check:** `cargo check` — **Passing.**
+*   **Full Build:** `npm run tauri build` — **Passing. Produces `.msi` (4.8 MB) and `.exe` NSIS installer (3.4 MB).**
 *   **Offline Check:** Disconnect from internet; fonts, icons, and data should all load locally.
 *   **Focus Verification:** Notification window must not interrupt typing.
 *   **Resource Profiling:** Rust background thread should use <20MB RAM while idling.

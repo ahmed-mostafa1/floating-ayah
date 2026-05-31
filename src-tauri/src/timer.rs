@@ -26,13 +26,16 @@ pub fn start(app: AppHandle) {
 
             expire_pause_if_needed(&app);
 
-            let paused = app
+            let settings = app
                 .state::<AppStore>()
                 .settings()
-                .map(|s| s.pause_until != "none")
-                .unwrap_or(false);
+                .unwrap_or_default();
 
-            if paused {
+            if settings.pause_until != "none" {
+                continue;
+            }
+
+            if settings.suppress_during_fullscreen && is_fullscreen_active() {
                 continue;
             }
 
@@ -45,7 +48,10 @@ pub fn start(app: AppHandle) {
 fn expire_pause_if_needed(app: &AppHandle) {
     let store = app.state::<AppStore>();
     if let Ok(mut settings) = store.settings() {
-        if settings.pause_until != "none" && settings.pause_expires_at > 0 && now_unix() >= settings.pause_expires_at {
+        if settings.pause_until != "none"
+            && settings.pause_expires_at > 0
+            && now_unix() >= settings.pause_expires_at
+        {
             settings.pause_until = "none".to_string();
             settings.pause_expires_at = 0;
             let _ = store.update_settings(settings);
@@ -67,6 +73,13 @@ fn advance_ayah(app: &AppHandle) {
     }
 }
 
+/// Advance to the next ayah and show the notification immediately.
+/// Used by the global shortcut and tray "Next Ayah" action.
+pub fn advance_and_notify(app: &AppHandle) {
+    advance_ayah(app);
+    show_notification(app);
+}
+
 pub fn show_notification(app: &AppHandle) {
     let window = match app.get_webview_window("notification") {
         Some(w) => w,
@@ -82,10 +95,7 @@ pub fn show_notification(app: &AppHandle) {
 }
 
 fn position_window(app: &AppHandle, window: &tauri::WebviewWindow) -> Result<(), String> {
-    let settings = app
-        .state::<AppStore>()
-        .settings()
-        .unwrap_or_default();
+    let settings = app.state::<AppStore>().settings().unwrap_or_default();
 
     let monitor = window
         .primary_monitor()
@@ -112,4 +122,65 @@ fn position_window(app: &AppHandle, window: &tauri::WebviewWindow) -> Result<(),
     window
         .set_position(LogicalPosition::new(x, y))
         .map_err(|e| e.to_string())
+}
+
+// ── Do Not Disturb: fullscreen detection ────────────────────────────────────
+
+#[cfg(target_os = "windows")]
+fn is_fullscreen_active() -> bool {
+    use windows_sys::Win32::Graphics::Gdi::{
+        GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTOPRIMARY,
+    };
+    use windows_sys::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowRect};
+
+    unsafe {
+        let hwnd = GetForegroundWindow();
+        if hwnd.is_null() {
+            return false;
+        }
+
+        let monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+
+        let mut mi = MONITORINFO {
+            cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+            rcMonitor: windows_sys::Win32::Foundation::RECT {
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+            },
+            rcWork: windows_sys::Win32::Foundation::RECT {
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+            },
+            dwFlags: 0,
+        };
+
+        if GetMonitorInfoW(monitor, &mut mi) == 0 {
+            return false;
+        }
+
+        let mut rect = windows_sys::Win32::Foundation::RECT {
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+        };
+
+        if GetWindowRect(hwnd, &mut rect) == 0 {
+            return false;
+        }
+
+        rect.left <= mi.rcMonitor.left
+            && rect.top <= mi.rcMonitor.top
+            && rect.right >= mi.rcMonitor.right
+            && rect.bottom >= mi.rcMonitor.bottom
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn is_fullscreen_active() -> bool {
+    false
 }

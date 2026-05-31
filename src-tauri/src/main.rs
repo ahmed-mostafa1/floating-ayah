@@ -106,6 +106,15 @@ fn main() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, _shortcut, event| {
+                    if event.state() == tauri_plugin_global_shortcut::ShortcutState::Pressed {
+                        timer::advance_and_notify(app);
+                    }
+                })
+                .build(),
+        )
         .setup(|app| {
             let db = QuranDb::open(app.handle())
                 .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
@@ -137,6 +146,10 @@ fn main() {
 
             // Background reminder timer
             timer::start(app.handle().clone());
+
+            // Global shortcut: Ctrl+Shift+A → show next ayah (non-fatal if already taken)
+            use tauri_plugin_global_shortcut::GlobalShortcutExt;
+            let _ = app.handle().global_shortcut().register("Ctrl+Shift+A");
 
             // Close to tray instead of quit
             let main_window = app.get_webview_window("main").unwrap();

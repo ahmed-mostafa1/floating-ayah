@@ -63,22 +63,7 @@ fn show_main_window(app: &AppHandle) {
 }
 
 fn advance_and_notify(app: &AppHandle) {
-    use crate::db::QuranDb;
-    use crate::settings::{AppStore, AyahReference};
-
-    let db = app.state::<QuranDb>();
-    let store = app.state::<AppStore>();
-
-    if let (Ok(current), ) = (store.current_ayah(), ) {
-        if let Ok(next) = db.next_ayah(current.surah_id, current.ayah_id) {
-            let _ = store.set_current_ayah(AyahReference {
-                surah_id: next.surah_id,
-                ayah_id: next.ayah_id,
-            });
-        }
-    }
-
-    crate::timer::show_notification(app);
+    crate::timer::advance_and_notify(app);
 }
 
 fn set_pause(app: &AppHandle, value: &str) {
