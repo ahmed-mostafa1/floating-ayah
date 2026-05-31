@@ -8,13 +8,14 @@ export function NotificationWindow() {
   const [ayah, setAyah] = useState<Ayah | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  async function refresh() {
+  async function refresh(incomingAyah?: Ayah) {
     try {
       const state = await getAppState();
       setSettings(state.settings);
-      setAyah(state.currentAyah);
+      // Use the ayah passed directly from the Rust event when available
+      // to avoid a stale-content flash while waiting for the command response.
+      setAyah(incomingAyah ?? state.currentAyah);
     } catch {
-      // If the DB read fails, silently dismiss rather than crashing
       await dismissNotification();
     }
   }
@@ -22,10 +23,11 @@ export function NotificationWindow() {
   useEffect(() => {
     refresh();
 
-    // Re-fetch whenever Rust shows the window again
     let unlisten: (() => void) | undefined;
     import("@tauri-apps/api/event").then(({ listen }) => {
-      listen("notification-show", () => refresh()).then((fn) => {
+      listen<Ayah | null>("notification-show", (event) => {
+        refresh(event.payload ?? undefined);
+      }).then((fn) => {
         unlisten = fn;
       });
     });

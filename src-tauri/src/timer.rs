@@ -90,8 +90,18 @@ pub fn show_notification(app: &AppHandle) {
         eprintln!("Failed to position notification window: {e}");
     }
 
+    // Fetch the current ayah to pass with the event so the frontend
+    // never shows a stale ayah between window.show() and a round-trip command.
+    let ayah_payload = {
+        let db = app.state::<QuranDb>();
+        let store = app.state::<AppStore>();
+        store.current_ayah().ok().and_then(|r| {
+            db.ayah_by_reference(r.surah_id, r.ayah_id).ok()
+        })
+    };
+
     let _ = window.show();
-    let _ = window.emit("notification-show", ());
+    let _ = window.emit("notification-show", ayah_payload);
 }
 
 fn position_window(app: &AppHandle, window: &tauri::WebviewWindow) -> Result<(), String> {
