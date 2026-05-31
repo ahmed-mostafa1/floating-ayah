@@ -5,22 +5,25 @@ const mockAyahs: Ayah[] = [
   {
     surahId: 1,
     ayahId: 1,
+    globalIndex: 1,
     surahName: "Al-Fatihah",
-    textUthmani: "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
+    textUthmani: "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
     textEnglish: "In the name of Allah, the Entirely Merciful, the Especially Merciful.",
   },
   {
     surahId: 1,
     ayahId: 2,
+    globalIndex: 2,
     surahName: "Al-Fatihah",
-    textUthmani: "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ",
+    textUthmani: "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ",
     textEnglish: "All praise is due to Allah, Lord of the worlds.",
   },
   {
     surahId: 1,
     ayahId: 3,
+    globalIndex: 3,
     surahName: "Al-Fatihah",
-    textUthmani: "ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
+    textUthmani: "ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
     textEnglish: "The Entirely Merciful, the Especially Merciful.",
   },
 ];
@@ -34,6 +37,7 @@ const mockState: AppState = {
     autoStart: true,
     suppressDuringFullscreen: true,
     pauseUntil: "none",
+    pauseExpiresAt: 0,
   },
   currentAyah: mockAyahs[0],
 };
@@ -81,6 +85,13 @@ export async function updateSettings(settings: AppSettings): Promise<AppSettings
     return invoke<AppSettings>("update_settings", { settings });
   }
   return settings;
+}
+
+export async function setCurrentAyah(surahId: number, ayahId: number): Promise<Ayah> {
+  if (isTauri) {
+    return invoke<Ayah>("set_current_ayah", { surahId, ayahId });
+  }
+  return mockAyahs[0];
 }
 
 export async function dismissNotification(): Promise<void> {

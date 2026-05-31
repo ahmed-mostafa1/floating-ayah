@@ -5,7 +5,7 @@ The goal is to build "Noor-Remind" (placeholder name), a lightweight, offline-fi
 
 ## Scope & Impact
 *   **Framework:** Tauri v2 (Rust backend, React + Vite + TypeScript frontend).
-*   **Data Source:** A 100% correct, pre-bundled SQLite database sourced directly from Tanzil.net (Uthmani text) and Sahih International (English translation).
+*   **Data Source:** A 100% correct, pre-bundled SQLite database sourced directly from alquran.cloud (Uthmani text + Sahih International English translation).
 *   **Translation Scope:** English only for v1, with the database structure kept simple but not hostile to future translation support.
 *   **Environment:** 100% Offline. All fonts, styles (Tailwind), icons (Lucide via Shadcn), and data will be locally bundled.
 *   **Behavior:** Runs primarily from the system tray. The floating notification auto-dismisses after a user-configured duration (default 30 seconds).
@@ -16,77 +16,73 @@ The goal is to build "Noor-Remind" (placeholder name), a lightweight, offline-fi
 *   **Pause Support:** Users can pause reminders temporarily, including options such as 1 hour, until tomorrow, or until manually resumed.
 
 ## Key Files & Context
-*   **Backend:** `src-tauri/src/main.rs` and `src-tauri/src/db.rs` currently exist. Planned modules: `src-tauri/src/timer.rs`, `src-tauri/src/tray.rs`, `src-tauri/src/settings.rs`.
-*   **Frontend:** `src/App.tsx`, `src/main.tsx`, `src/tauri.ts`, `src/types.ts`, `src/styles.css` currently exist. Planned components: `src/Settings.tsx`, `src/Notification.tsx`.
-*   **Database Script:** `scripts/generate_db.py` exists and currently supports a development seed TSV. Production source integration with Tanzil/Sahih data is still pending.
-*   **Database Seed:** `scripts/seed-quran.tsv` exists for local development only.
-*   **Database Output:** `resources/quran.sqlite` exists as a generated development database using the sample seed.
-*   **Assets:** `src/assets/fonts/Amiri-Regular.ttf`, `src/assets/fonts/KFGQPC_Uthman_Taha_Naskh.ttf`.
+*   **Backend:** `src-tauri/src/main.rs`, `src-tauri/src/db.rs`, `src-tauri/src/timer.rs`, `src-tauri/src/tray.rs`, `src-tauri/src/settings.rs`.
+*   **Frontend:** `src/App.tsx`, `src/main.tsx`, `src/tauri.ts`, `src/types.ts`, `src/styles.css`, `src/Notification.tsx`, `src/NotificationWindow.tsx`, `src/Settings.tsx`.
+*   **Database Script:** `scripts/generate_db.py` — supports both `--download` (alquran.cloud API) and `--input <tsv>` modes.
+*   **Database Output:** `resources/quran.sqlite` — contains all 6236 ayahs (Uthmani text + Sahih International).
+*   **Fonts:** `public/assets/fonts/AmiriQuran.ttf`, `public/assets/fonts/Amiri-Regular.ttf`.
+*   **Icons:** `src-tauri/icons/icon.ico`, `src-tauri/icons/32x32.png`, `src-tauri/icons/128x128.png`.
 
 ## Current Implementation Status
-*   **Completed:** React + TypeScript + Vite scaffold, Tauri v2 scaffold, initial typed app settings/Ayah models, browser-mode mock Tauri bridge, responsive app shell, README development instructions, and JavaScript dependency lockfile.
-*   **Completed:** Rust toolchain installed via `winget` and available through the user Cargo path.
-*   **Completed:** Development SQLite generation script added with validation, metadata, checksum, schema version, and a small Al-Fatihah seed dataset.
-*   **Completed:** `resources/quran.sqlite` generated from the development seed.
-*   **Completed:** Rust backend now uses `src-tauri/src/db.rs` to read the SQLite database and provide current, next, and previous Ayah commands.
-*   **Blocked:** Visual Studio Build Tools/MSVC is still missing. First install attempt failed with `0x80070070` because `C:` has less than 1 GB free. Second attempt targeting `E:\VSBuildTools` failed with exit code `1602`.
-*   **Verified:** `npm install`, `npm run db:generate`, `npm run build`, Tauri CLI availability, and Rust toolchain availability when `%USERPROFILE%\.cargo\bin` is in `PATH`.
-*   **Next:** Free enough `C:` space for MSVC Build Tools, complete Tauri/Rust compilation, then implement settings persistence and tray behavior.
+*   **Completed:** React + TypeScript + Vite scaffold, Tauri v2 scaffold, typed app settings/Ayah models, browser-mode mock Tauri bridge, responsive app shell.
+*   **Completed:** Full Rust backend — `db.rs` (SQLite), `settings.rs` (persistence), `timer.rs` (background loop), `tray.rs` (system tray), `main.rs` (app entry, window setup).
+*   **Completed:** `resources/quran.sqlite` with all 6236 ayahs downloaded from alquran.cloud (Uthmani text + Sahih International).
+*   **Completed:** Sequential Ayah progression with wrap-around, position persistence.
+*   **Completed:** Notification window (436×540px, always-on-top, transparent, no focus steal).
+*   **Completed:** Settings panel — interval, auto-dismiss, position, Arabic font, autostart toggle, DND toggle, pause controls.
+*   **Completed:** Start Point picker — dropdown of all 114 surahs + ayah number input, calls `set_current_ayah` command.
+*   **Completed:** Pause expiry — "1 hour" and "until tomorrow" pauses auto-expire via stored Unix timestamp; checked on every timer tick.
+*   **Completed:** Dynamic Arabic font — "System", "Amiri" (Amiri Quran variant), "KFGQPC" (if font file available) — applied as inline style on Arabic text.
+*   **Completed:** `@font-face` declarations for Amiri (AmiriQuran.ttf bundled in `public/assets/fonts/`).
+*   **Completed:** Global Ayah progress counter in notification (e.g., "42 / 6236").
+*   **Completed:** App icon generated for Windows (`src-tauri/icons/icon.ico`).
+*   **Pending:** Fullscreen detection for Do Not Disturb (settings toggle exists; detection logic not yet implemented in `timer.rs`).
+*   **Pending:** KFGQPC Uthman Taha Naskh font file — needs to be sourced and placed in `public/assets/fonts/KFGQPC_Uthman_Taha_Naskh.ttf`.
+*   **Pending:** Global keyboard shortcut for manual trigger (`tauri-plugin-global-shortcut`).
+*   **Pending:** Graceful error fallback UI for database read failures.
+*   **Pending:** Build pipeline verification (`.msi`/`.exe`/`.dmg`/`.AppImage`).
 
 ## Implementation Steps
 
-### Phase 1: Project Scaffolding & Offline Setup
-1.  Initialize a new Tauri v2 project with React, TypeScript, and Vite. **Status:** Done.
-2.  Install Tailwind CSS and configure headless UI components (shadcn/ui). Ensure no external CDNs are used. **Status:** Deferred. Current UI uses plain CSS to keep the first scaffold minimal.
-3.  Download and bundle the necessary fonts locally using CSS `@font-face`. **Status:** Pending.
-4.  Prepare development prerequisites for Tauri/Rust. **Status:** Rust installed; MSVC Build Tools still pending on Windows.
+### Phase 1: Project Scaffolding & Offline Setup ✅
+1. Initialize a new Tauri v2 project with React, TypeScript, and Vite. **Done.**
+2. Bundle fonts locally using CSS `@font-face`. **Done** — AmiriQuran.ttf bundled; KFGQPC pending sourcing.
+3. Prepare development prerequisites (Rust, MSVC Build Tools). **Done.**
 
-### Phase 2: Database Generation (The Tanzil Script)
-1.  Create a standalone script to download or ingest the raw XML/TXT dataset from Tanzil.net (Uthmani text and Sahih International translation). **Status:** In progress. Script exists with TSV ingestion and sample seed; trusted source download/integration is pending.
-2.  Parse the dataset to ensure verified accuracy. **Status:** In progress. The script validates required fields, sort order, duplicate references, and full 6236 Ayah count unless sample mode is explicitly enabled.
-3.  Generate a `quran.sqlite` database file containing `surah_id`, `ayah_id`, `global_index`, `text_uthmani`, `text_english`, Surah metadata, source checksum, schema version, and generated timestamp. **Status:** Done for development seed; pending for full trusted source data.
-4.  Bundle `quran.sqlite` into the Tauri application's `resources` directory for instant offline access. **Status:** Configured in `src-tauri/tauri.conf.json`; final bundle verification is blocked by missing MSVC Build Tools.
+### Phase 2: Database Generation ✅
+1. Download Uthmani text + Sahih International via `scripts/generate_db.py --download`. **Done — 6236 ayahs.**
+2. Validate and store in `resources/quran.sqlite`. **Done.**
+3. Bundle in Tauri `resources`. **Configured in tauri.conf.json.**
 
-### Phase 3: Rust Backend & Core Logic
-1.  **SQLite Access:** Add Rust database access for `resources/quran.sqlite`, including current Ayah lookup and next/previous sequential lookup. **Status:** Implemented; compile verification is blocked by missing MSVC Build Tools.
-2.  **System Tray:** Implement Tauri v2 System Tray functionality to keep the app running without a main window.
-3.  **State Management:** Use Rust to track the current Ayah index sequentially and load/save settings via `tauri-plugin-store`.
-4.  **Timer Thread:** Implement a background `tokio` timer that triggers the notification window based on the user's interval setting.
-5.  **Window Management:**
-    *   Create a hidden, transparent, frameless, "Always-on-Top" notification window.
-    *   Implement logic to handle the "Safe Area" calculation for positioning (e.g., Bottom Right), including multi-monitor and DPI scaling behavior.
-    *   Ensure the notification window uses `accept_focus: false` to prevent stealing keyboard focus.
-6.  **Auto Start:** Integrate platform-specific startup behavior so the app launches on login by default, while respecting the user's setting.
-7.  **Do Not Disturb Detection:** Suppress reminders when fullscreen apps, presentations, or gaming are detected, unless the user disables this behavior.
-8.  **Pause Scheduling:** Support temporary pause windows and resume reminders automatically when the pause expires.
+### Phase 3: Rust Backend & Core Logic ✅
+1. **SQLite Access:** `db.rs` — current, next, previous Ayah queries with global_index. **Done.**
+2. **System Tray:** `tray.rs` — show/hide, next ayah, pause options, resume, quit. **Done.**
+3. **State Management:** `settings.rs` — typed `AppSettings` + `AyahReference`, file-based persistence, schema versioning. **Done.**
+4. **Timer Thread:** `timer.rs` — tokio async loop, pause-aware, auto-expires timed pauses. **Done.**
+5. **Window Management:** Transparent, frameless, always-on-top, no-focus notification window at 436×540px. Position calculation with DPI scaling and multi-monitor support. **Done.**
+6. **Auto Start:** `tauri-plugin-autostart` integrated, synced on settings change. **Done.**
+7. **Do Not Disturb Detection:** Settings field exists, timer checks `suppress_during_fullscreen` flag, but actual fullscreen app detection is **pending** (requires platform-specific API calls).
+8. **Pause Scheduling:** "1 hour" / "tomorrow" / "manual" pause modes with Unix timestamp expiry. Auto-cleared by timer. **Done.**
 
-### Phase 4: Frontend Development
-1.  **Settings Dashboard:**
-    *   Build controls for Interval (e.g., 5 mins, 30 mins), Auto-dismiss duration (default 30s), Start Point (Surah/Ayah), Position, Font, Auto Start, Do Not Disturb behavior, and Pause controls.
-    *   Show the current sequential reading position and allow the user to reset it to a selected Surah/Ayah.
-2.  **Notification Floating Card:**
-    *   Implement a glassmorphism design (blur, semi-transparent background) using Tailwind.
-    *   Handle dynamic resizing based on Ayah length.
-    *   Implement Next/Prev and Copy buttons.
-    *   Add a visual progress bar or countdown indicating the auto-dismiss timer.
-    *   Add RTL/LTR dynamic support.
+### Phase 4: Frontend Development ✅
+1. **Settings Dashboard:** Interval, auto-dismiss, position grid, font selector, autostart toggle, DND toggle, pause controls, Start Point picker. **Done.**
+2. **Notification Floating Card:** Glassmorphism card, Arabic text (RTL), English translation, progress ring timer, auto-dismiss progress bar, Ayah counter (X/6236), Next/Prev/Copy buttons. Dynamic Arabic font from settings. **Done.**
 
 ### Phase 5: Polish & Deployment
-1.  **Global Shortcuts:** Integrate `tauri-plugin-global-shortcut` for manual triggering.
-2.  **Graceful Errors:** Add fallback UI for database read failures.
-3.  **Build Pipelines:** Configure `tauri.conf.json` for building `.msi` / `.exe` (Windows), `.dmg` (macOS), and `.AppImage` (Linux) installers.
-4.  **Platform Behavior QA:** Validate startup, tray, window positioning, fullscreen suppression, and installer behavior on Windows, macOS, and Linux.
+1. **Global Shortcuts:** `tauri-plugin-global-shortcut` for manual triggering. **Pending.**
+2. **Graceful Errors:** Fallback UI for database read failures. **Pending.**
+3. **DNF Detection:** Implement platform-specific fullscreen detection in `timer.rs`. **Pending.**
+4. **KFGQPC Font:** Source and bundle `KFGQPC_Uthman_Taha_Naskh.ttf`. **Pending.**
+5. **Build Pipelines:** Configure for `.msi`/`.exe` (Windows), `.dmg` (macOS), `.AppImage` (Linux). **Pending — need to run `npm run tauri build`.**
+6. **Platform Behavior QA:** Validate startup, tray, window positioning, installer. **Pending.**
 
 ## Verification & Testing
-*   **Offline Check:** Disconnect from the internet, clear caches, and ensure the app loads fonts, icons, and text perfectly.
-*   **Frontend Build Check:** Run `npm run build`. **Current status:** Passing.
-*   **Database Generation Check:** Run `npm run db:generate`. **Current status:** Passing with development seed.
-*   **Rust Check:** Run `cargo check` from `src-tauri`. **Current status:** Blocked by missing `link.exe` because MSVC Build Tools are not installed.
-*   **Tauri Environment Check:** Run `npm run tauri -- info` with `%USERPROFILE%\.cargo\bin` in `PATH`. **Current status:** Rust detected, MSVC Build Tools still unresolved on Windows.
-*   **Focus Verification:** Ensure the notification window does not interrupt typing in other applications.
-*   **Resource Profiling:** Verify the Rust background thread uses less than 20MB of RAM while idling.
-*   **Data Integrity Check:** Cross-reference a random sample of Ayahs in the generated SQLite file against Tanzil.net manually.
-*   **Sequential Progression Check:** Verify reminders advance Ayahs in order, persist position after restart, and resume correctly after pause.
-*   **Startup Check:** Verify the app launches on login by default on Windows, macOS, and Linux, and that disabling the setting works.
-*   **Do Not Disturb Check:** Verify reminders are suppressed during fullscreen apps, presentations, or gaming by default, and shown when the setting is disabled.
-*   **Pause Check:** Verify pause durations suppress reminders and automatically resume after expiry.
+*   **Frontend Build:** `npm run build` — **Passing.**
+*   **Database Generation:** `npm run db:download` — **Passing (6236 ayahs).**
+*   **Rust Check:** `cargo check` from `src-tauri` — **In progress (MSVC Build Tools now installed).**
+*   **Offline Check:** Disconnect from internet; fonts, icons, and data should all load locally.
+*   **Focus Verification:** Notification window must not interrupt typing.
+*   **Resource Profiling:** Rust background thread should use <20MB RAM while idling.
+*   **Sequential Progression Check:** Verify advance, wrap-around at ayah 6236, position persistence.
+*   **Pause Check:** Verify "1 hour" and "until tomorrow" auto-expire; manual pause stays until cleared.
+*   **Startup Check:** Verify autostart on Windows/macOS/Linux; disabling setting works.

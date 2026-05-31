@@ -121,7 +121,7 @@ fn main() {
                 WebviewUrl::App("/".into()),
             )
             .title("")
-            .inner_size(436.0, 300.0)
+            .inner_size(436.0, 540.0)
             .decorations(false)
             .transparent(true)
             .always_on_top(true)

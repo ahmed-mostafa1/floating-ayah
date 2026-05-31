@@ -1,10 +1,17 @@
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, LogicalPosition, Manager};
 
 use crate::{
     db::QuranDb,
     settings::{AppStore, AyahReference},
 };
+
+pub fn now_unix() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0)
+}
 
 pub fn start(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
@@ -16,6 +23,8 @@ pub fn start(app: AppHandle) {
                 .unwrap_or(30);
 
             tokio::time::sleep(Duration::from_secs(u64::from(interval_minutes) * 60)).await;
+
+            expire_pause_if_needed(&app);
 
             let paused = app
                 .state::<AppStore>()
@@ -31,6 +40,17 @@ pub fn start(app: AppHandle) {
             show_notification(&app);
         }
     });
+}
+
+fn expire_pause_if_needed(app: &AppHandle) {
+    let store = app.state::<AppStore>();
+    if let Ok(mut settings) = store.settings() {
+        if settings.pause_until != "none" && settings.pause_expires_at > 0 && now_unix() >= settings.pause_expires_at {
+            settings.pause_until = "none".to_string();
+            settings.pause_expires_at = 0;
+            let _ = store.update_settings(settings);
+        }
+    }
 }
 
 fn advance_ayah(app: &AppHandle) {
@@ -78,7 +98,7 @@ fn position_window(app: &AppHandle, window: &tauri::WebviewWindow) -> Result<(),
     let screen_h = physical.height as f64 / scale;
 
     let win_w = 436.0_f64;
-    let win_h = 300.0_f64;
+    let win_h = 540.0_f64;
     let margin = 16.0_f64;
     let taskbar = 48.0_f64;
 

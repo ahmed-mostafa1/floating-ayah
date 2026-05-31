@@ -9,6 +9,7 @@ use tauri::{path::BaseDirectory, AppHandle, Manager};
 pub struct Ayah {
     pub surah_id: u16,
     pub ayah_id: u16,
+    pub global_index: i64,
     pub surah_name: String,
     pub text_uthmani: String,
     pub text_english: String,
@@ -33,7 +34,7 @@ impl QuranDb {
         query_single_ayah(
             &connection,
             r#"
-            SELECT a.surah_id, a.ayah_id, s.name_latin, a.text_uthmani, a.text_english
+            SELECT a.surah_id, a.ayah_id, a.global_index, s.name_latin, a.text_uthmani, a.text_english
             FROM ayahs a
             INNER JOIN surahs s ON s.id = a.surah_id
             ORDER BY a.global_index ASC
@@ -48,7 +49,7 @@ impl QuranDb {
         query_single_ayah(
             &connection,
             r#"
-            SELECT a.surah_id, a.ayah_id, s.name_latin, a.text_uthmani, a.text_english
+            SELECT a.surah_id, a.ayah_id, a.global_index, s.name_latin, a.text_uthmani, a.text_english
             FROM ayahs a
             INNER JOIN surahs s ON s.id = a.surah_id
             WHERE a.surah_id = ?1 AND a.ayah_id = ?2
@@ -65,7 +66,7 @@ impl QuranDb {
         let next_ayah = query_single_ayah(
             &connection,
             r#"
-            SELECT a.surah_id, a.ayah_id, s.name_latin, a.text_uthmani, a.text_english
+            SELECT a.surah_id, a.ayah_id, a.global_index, s.name_latin, a.text_uthmani, a.text_english
             FROM ayahs a
             INNER JOIN surahs s ON s.id = a.surah_id
             WHERE a.global_index > ?1
@@ -95,7 +96,7 @@ impl QuranDb {
         let previous_ayah = query_single_ayah(
             &connection,
             r#"
-            SELECT a.surah_id, a.ayah_id, s.name_latin, a.text_uthmani, a.text_english
+            SELECT a.surah_id, a.ayah_id, a.global_index, s.name_latin, a.text_uthmani, a.text_english
             FROM ayahs a
             INNER JOIN surahs s ON s.id = a.surah_id
             WHERE a.global_index < ?1
@@ -119,7 +120,7 @@ impl QuranDb {
         query_single_ayah(
             &connection,
             r#"
-            SELECT a.surah_id, a.ayah_id, s.name_latin, a.text_uthmani, a.text_english
+            SELECT a.surah_id, a.ayah_id, a.global_index, s.name_latin, a.text_uthmani, a.text_english
             FROM ayahs a
             INNER JOIN surahs s ON s.id = a.surah_id
             ORDER BY a.global_index DESC
@@ -183,9 +184,10 @@ where
             Ok(Ayah {
                 surah_id: row.get(0)?,
                 ayah_id: row.get(1)?,
-                surah_name: row.get(2)?,
-                text_uthmani: row.get(3)?,
-                text_english: row.get(4)?,
+                global_index: row.get(2)?,
+                surah_name: row.get(3)?,
+                text_uthmani: row.get(4)?,
+                text_english: row.get(5)?,
             })
         })
         .map_err(|error| error.to_string())

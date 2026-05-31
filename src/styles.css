@@ -1,3 +1,20 @@
+@font-face {
+  font-family: "Amiri";
+  src: url("/assets/fonts/AmiriQuran.ttf") format("truetype"),
+       url("/assets/fonts/Amiri-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "KFGQPC Uthman Taha Naskh";
+  src: url("/assets/fonts/KFGQPC_Uthman_Taha_Naskh.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color: #f7f4ea;
   background: #0b1410;
@@ -137,6 +154,61 @@ button {
   margin: 10px 0 0;
   font-size: 0.82rem;
   color: #f2d991;
+}
+
+.settings-desc {
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  color: #b4aa91;
+}
+
+.settings-desc strong {
+  color: #f7f4ea;
+}
+
+.start-point-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.start-point-select {
+  flex: 1;
+  min-width: 200px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f7f4ea;
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  appearance: auto;
+}
+
+.start-point-select option {
+  background: #0f1e17;
+  color: #f7f4ea;
+}
+
+.start-point-ayah {
+  width: 72px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f7f4ea;
+  font: inherit;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.start-point-ayah::-webkit-inner-spin-button,
+.start-point-ayah::-webkit-outer-spin-button {
+  opacity: 0.4;
 }
 
 .chip-row {
@@ -490,6 +562,7 @@ h2 {
 
 .notif-card {
   width: min(380px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 24px;
   background: rgba(13, 26, 19, 0.72);
@@ -498,7 +571,8 @@ h2 {
     0 0 0 1px rgba(215, 184, 107, 0.08) inset;
   backdrop-filter: blur(28px) saturate(1.4);
   padding: 20px 22px 16px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .notif-header {
@@ -571,7 +645,7 @@ h2 {
 .notif-arabic {
   margin: 0 0 12px;
   color: #fff8df;
-  font-family: "KFGQPC Uthman Taha Naskh", "Amiri", "Times New Roman", serif;
+  font-family: "KFGQPC Uthman Taha Naskh", "Amiri", "Traditional Arabic", "Arabic Typesetting", serif;
   font-size: clamp(1.5rem, 5vw, 2rem);
   line-height: 1.85;
   text-align: right;
@@ -582,6 +656,15 @@ h2 {
   color: #d9ceb2;
   font-size: 0.92rem;
   line-height: 1.75;
+}
+
+.notif-progress-label {
+  margin: 0 0 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: right;
+  letter-spacing: 0.06em;
 }
 
 .notif-progress-track {

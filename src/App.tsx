@@ -151,6 +151,8 @@ function App() {
         <Settings
           settings={settings}
           onUpdate={(next) => setSettings(next)}
+          currentAyah={ayah}
+          onAyahChange={(next) => setAyah(next)}
         />
       )}
     </main>

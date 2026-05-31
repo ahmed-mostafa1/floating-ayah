@@ -13,6 +13,8 @@ pub struct AppSettings {
     pub auto_start: bool,
     pub suppress_during_fullscreen: bool,
     pub pause_until: String,
+    #[serde(default)]
+    pub pause_expires_at: i64,
 }
 
 impl Default for AppSettings {
@@ -25,6 +27,7 @@ impl Default for AppSettings {
             auto_start: true,
             suppress_during_fullscreen: true,
             pause_until: "none".to_string(),
+            pause_expires_at: 0,
         }
     }
 }

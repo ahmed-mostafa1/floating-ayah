@@ -83,9 +83,19 @@ fn advance_and_notify(app: &AppHandle) {
 
 fn set_pause(app: &AppHandle, value: &str) {
     use crate::settings::AppStore;
+    use crate::timer::now_unix;
     let store = app.state::<AppStore>();
     if let Ok(mut settings) = store.settings() {
+        let now = now_unix();
         settings.pause_until = value.to_string();
+        settings.pause_expires_at = match value {
+            "one-hour" => now + 3600,
+            "tomorrow" => {
+                let seconds_per_day = 86400i64;
+                (now / seconds_per_day) * seconds_per_day + seconds_per_day
+            }
+            _ => 0,
+        };
         let _ = store.update_settings(settings);
     }
 }

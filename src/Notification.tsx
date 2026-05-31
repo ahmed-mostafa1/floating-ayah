@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { Ayah, AppSettings } from "./types";
 
+function arabicStyle(fontFamily: string): { fontFamily?: string } {
+  if (fontFamily === "Amiri") return { fontFamily: '"Amiri", serif' };
+  if (fontFamily === "KFGQPC") return { fontFamily: '"KFGQPC Uthman Taha Naskh", "Amiri", serif' };
+  return {};
+}
+
 type Props = {
   ayah: Ayah;
   settings: AppSettings;
@@ -66,11 +72,13 @@ export function Notification({ ayah, settings, onNext, onPrevious, onDismiss, is
         </div>
       </div>
 
-      <p className="notif-arabic" dir="rtl" lang="ar">
+      <p className="notif-arabic" dir="rtl" lang="ar" style={arabicStyle(settings.fontFamily)}>
         {ayah.textUthmani}
       </p>
 
       <p className="notif-english">{ayah.textEnglish}</p>
+
+      <p className="notif-progress-label">{ayah.globalIndex} / 6236</p>
 
       <div className="notif-progress-track" aria-hidden="true">
         <div className="notif-progress-fill" style={{ width: `${progress}%` }} />
