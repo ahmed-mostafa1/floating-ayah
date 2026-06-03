@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 mod db;
 mod settings;
 mod timer;
@@ -7,6 +9,8 @@ use db::{Ayah, QuranDb};
 use serde::Serialize;
 use settings::{AppSettings, AppStore, AyahReference};
 use tauri::{AppHandle, Manager, State, WebviewWindowBuilder, WebviewUrl};
+
+const AUTOSTART_ARG: &str = "--hidden";
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -90,6 +94,11 @@ fn dismiss_notification(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn reset_notification_timeout(app: AppHandle) {
+    timer::reset_notification_timeout(&app);
+}
+
 fn sync_autostart(app: &AppHandle, enable: bool) {
     use tauri_plugin_autostart::ManagerExt;
     let manager = app.autolaunch();
@@ -104,7 +113,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            None,
+            Some(vec![AUTOSTART_ARG]),
         ))
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
@@ -116,6 +125,8 @@ fn main() {
                 .build(),
         )
         .setup(|app| {
+            let launched_hidden = std::env::args().any(|arg| arg == AUTOSTART_ARG);
+
             let db = QuranDb::open(app.handle())
                 .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
             let store = AppStore::open(app.handle())
@@ -130,7 +141,7 @@ fn main() {
                 WebviewUrl::App("/".into()),
             )
             .title("")
-            .inner_size(436.0, 540.0)
+            .inner_size(366.0, 430.0)
             .decorations(false)
             .transparent(true)
             .always_on_top(true)
@@ -161,6 +172,13 @@ fn main() {
                 }
             });
 
+            if launched_hidden {
+                let _ = main_window.hide();
+            } else {
+                let _ = main_window.show();
+                let _ = main_window.set_focus();
+            }
+
             // Apply auto-start setting on first run
             let initial_auto_start = app
                 .state::<AppStore>()
@@ -178,6 +196,7 @@ fn main() {
             update_settings,
             set_current_ayah,
             dismiss_notification,
+            reset_notification_timeout,
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Noor Remind");

@@ -1,10 +1,15 @@
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::{
+    sync::atomic::{AtomicU64, Ordering},
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 use tauri::{AppHandle, Emitter, LogicalPosition, Manager};
 
 use crate::{
     db::QuranDb,
     settings::{AppStore, AyahReference},
 };
+
+static NOTIFICATION_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 pub fn now_unix() -> i64 {
     SystemTime::now()
@@ -102,6 +107,31 @@ pub fn show_notification(app: &AppHandle) {
 
     let _ = window.show();
     let _ = window.emit("notification-show", ayah_payload);
+
+    reset_notification_timeout(app);
+}
+
+pub fn reset_notification_timeout(app: &AppHandle) {
+    let auto_dismiss_seconds = app
+        .state::<AppStore>()
+        .settings()
+        .map(|settings| settings.auto_dismiss_seconds)
+        .unwrap_or(30);
+
+    let sequence = NOTIFICATION_SEQUENCE.fetch_add(1, Ordering::Relaxed) + 1;
+    let app = app.clone();
+
+    tauri::async_runtime::spawn(async move {
+        tokio::time::sleep(Duration::from_secs(u64::from(auto_dismiss_seconds))).await;
+
+        if NOTIFICATION_SEQUENCE.load(Ordering::Relaxed) != sequence {
+            return;
+        }
+
+        if let Some(window) = app.get_webview_window("notification") {
+            let _ = window.hide();
+        }
+    });
 }
 
 fn position_window(app: &AppHandle, window: &tauri::WebviewWindow) -> Result<(), String> {
@@ -117,9 +147,9 @@ fn position_window(app: &AppHandle, window: &tauri::WebviewWindow) -> Result<(),
     let screen_w = physical.width as f64 / scale;
     let screen_h = physical.height as f64 / scale;
 
-    let win_w = 436.0_f64;
-    let win_h = 540.0_f64;
-    let margin = 16.0_f64;
+    let win_w = 366.0_f64;
+    let win_h = 430.0_f64;
+    let margin = 12.0_f64;
     let taskbar = 48.0_f64;
 
     let (x, y) = match settings.position.as_str() {

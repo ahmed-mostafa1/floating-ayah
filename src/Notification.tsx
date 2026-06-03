@@ -48,7 +48,9 @@ export function Notification({ ayah, settings, onNext, onPrevious, onDismiss, is
     });
   }
 
-  const progress = (secondsLeft / settings.autoDismissSeconds) * 100;
+  const progress = settings.autoDismissSeconds > 0
+    ? (secondsLeft / settings.autoDismissSeconds) * 100
+    : 0;
 
   return (
     <div className="notif-card" role="dialog" aria-label={`Ayah reminder: ${ayah.surahName} ${ayah.surahId}:${ayah.ayahId}`}>
@@ -57,25 +59,30 @@ export function Notification({ ayah, settings, onNext, onPrevious, onDismiss, is
           <span className="notif-surah">{ayah.surahName}</span>
           <span className="notif-ref">{ayah.surahId}:{ayah.ayahId}</span>
         </div>
-        <button
-          type="button"
-          className="notif-timer-ring notif-timer-ring-btn"
-          onClick={onDismiss}
-          aria-label={`Dismiss — closes in ${secondsLeft}s`}
-          title="Dismiss"
-        >
-          <svg viewBox="0 0 36 36" className="notif-ring-svg">
-            <circle cx="18" cy="18" r="15.9" className="notif-ring-track" />
-            <circle
-              cx="18"
-              cy="18"
-              r="15.9"
-              className="notif-ring-fill"
-              strokeDasharray={`${progress} 100`}
-            />
-          </svg>
-          <span className="notif-timer-label">{secondsLeft}</span>
-        </button>
+        <div className="notif-controls">
+          <div className="notif-timer-ring" aria-label={`Closes in ${secondsLeft}s`} role="timer">
+            <svg viewBox="0 0 36 36" className="notif-ring-svg">
+              <circle cx="18" cy="18" r="15.9" className="notif-ring-track" />
+              <circle
+                cx="18"
+                cy="18"
+                r="15.9"
+                className="notif-ring-fill"
+                strokeDasharray={`${progress} 100`}
+              />
+            </svg>
+            <span className="notif-timer-label">{secondsLeft}</span>
+          </div>
+          <button
+            type="button"
+            className="notif-close-btn"
+            onClick={onDismiss}
+            aria-label="Close notification"
+            title="Close"
+          >
+            X
+          </button>
+        </div>
       </div>
 
       <p className="notif-arabic" dir="rtl" lang="ar" style={arabicStyle(settings.fontFamily)}>

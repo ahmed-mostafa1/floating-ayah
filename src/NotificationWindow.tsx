@@ -1,5 +1,11 @@
 import { useEffect, useState, useTransition } from "react";
-import { getAppState, getNextAyah, getPreviousAyah, dismissNotification } from "./tauri";
+import {
+  getAppState,
+  getNextAyah,
+  getPreviousAyah,
+  dismissNotification,
+  resetNotificationTimeout,
+} from "./tauri";
 import { Notification } from "./Notification";
 import type { AppSettings, Ayah } from "./types";
 
@@ -38,6 +44,7 @@ export function NotificationWindow() {
   function handleNext() {
     if (!ayah) return;
     startTransition(async () => {
+      await resetNotificationTimeout();
       setAyah(await getNextAyah(ayah));
     });
   }
@@ -45,6 +52,7 @@ export function NotificationWindow() {
   function handlePrevious() {
     if (!ayah) return;
     startTransition(async () => {
+      await resetNotificationTimeout();
       setAyah(await getPreviousAyah(ayah));
     });
   }

@@ -15,6 +15,11 @@ if (isTauri) {
     new URLSearchParams(window.location.search).get("window") === "notification";
 }
 
+if (isNotificationWindow) {
+  document.documentElement.classList.add("notification-root");
+  document.body.classList.add("notification-body");
+}
+
 createRoot(document.getElementById("root") as HTMLElement).render(
   <StrictMode>
     {isNotificationWindow ? <NotificationWindow /> : <App />}

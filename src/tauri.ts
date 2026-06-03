@@ -99,3 +99,9 @@ export async function dismissNotification(): Promise<void> {
     return invoke("dismiss_notification");
   }
 }
+
+export async function resetNotificationTimeout(): Promise<void> {
+  if (isTauri) {
+    return invoke("reset_notification_timeout");
+  }
+}
