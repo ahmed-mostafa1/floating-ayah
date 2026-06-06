@@ -2,10 +2,11 @@ import { useEffect, useState, useTransition } from "react";
 import { getAppState, getNextAyah, getPreviousAyah } from "./tauri";
 import { Notification } from "./Notification";
 import { Settings } from "./Settings";
+import { StatsPanel } from "./StatsPanel";
 import type { AppSettings, Ayah } from "./types";
 
 type LoadState = "loading" | "ready" | "error";
-type Tab = "reminder" | "settings";
+type Tab = "reminder" | "settings" | "statistics";
 
 function App() {
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -98,6 +99,15 @@ function App() {
           >
             Settings
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "statistics"}
+            className={`app-tab ${tab === "statistics" ? "app-tab-active" : ""}`}
+            onClick={() => setTab("statistics")}
+          >
+            Statistics
+          </button>
         </nav>
         <div className="app-header-fill" />
       </header>
@@ -168,6 +178,8 @@ function App() {
           onAyahChange={(next) => setAyah(next)}
         />
       )}
+
+      {tab === "statistics" && <StatsPanel />}
     </main>
   );
 }

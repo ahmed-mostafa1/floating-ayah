@@ -19,26 +19,30 @@ type Props = {
 export function Notification({ ayah, settings, onNext, onPrevious, onDismiss, isPending = false }: Props) {
   const [secondsLeft, setSecondsLeft] = useState(settings.autoDismissSeconds);
   const [copied, setCopied] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const dismissedRef = useRef(false);
 
+  // Deadline-based countdown: compute remaining time from a wall-clock deadline
+  // on every tick rather than decrementing a counter. setInterval is throttled/
+  // coalesced when this window is unfocused, so a counting timer drifts and the
+  // card lingers past zero — recomputing against Date.now() stays accurate.
   useEffect(() => {
+    dismissedRef.current = false;
+    const deadline = Date.now() + settings.autoDismissSeconds * 1000;
     setSecondsLeft(settings.autoDismissSeconds);
-  }, [ayah, settings.autoDismissSeconds]);
 
-  useEffect(() => {
-    if (secondsLeft <= 0) {
-      onDismiss();
-      return;
-    }
-
-    intervalRef.current = setInterval(() => {
-      setSecondsLeft((s) => s - 1);
-    }, 1000);
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+    const tick = () => {
+      const remaining = Math.ceil((deadline - Date.now()) / 1000);
+      setSecondsLeft(Math.max(0, remaining));
+      if (remaining <= 0 && !dismissedRef.current) {
+        dismissedRef.current = true;
+        clearInterval(interval);
+        onDismiss();
+      }
     };
-  }, [secondsLeft, onDismiss]);
+
+    const interval = setInterval(tick, 250);
+    return () => clearInterval(interval);
+  }, [ayah, settings.autoDismissSeconds, onDismiss]);
 
   function handleCopy() {
     const text = `${ayah.textUthmani}\n\n${ayah.textEnglish}\n\n— ${ayah.surahName} ${ayah.surahId}:${ayah.ayahId}`;
@@ -89,7 +93,7 @@ export function Notification({ ayah, settings, onNext, onPrevious, onDismiss, is
         {ayah.textUthmani}
       </p>
 
-      <p className="notif-english">{ayah.textEnglish}</p>
+      {settings.showEnglish && <p className="notif-english">{ayah.textEnglish}</p>}
 
       <p className="notif-progress-label">{ayah.globalIndex} / 6236</p>
 

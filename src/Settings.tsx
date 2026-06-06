@@ -259,6 +259,20 @@ export function Settings({ settings, onUpdate, currentAyah, onAyahChange }: Prop
             onClick={() => commit({ suppressDuringFullscreen: !settings.suppressDuringFullscreen })}
           />
         </div>
+
+        <div className="toggle-row">
+          <div>
+            <p className="toggle-title">Show English Translation</p>
+            <p className="toggle-desc">Display the English translation beneath the Arabic ayah.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={settings.showEnglish}
+            className={`toggle ${settings.showEnglish ? "toggle-on" : ""}`}
+            onClick={() => commit({ showEnglish: !settings.showEnglish })}
+          />
+        </div>
       </section>
 
       {/* Pause */}

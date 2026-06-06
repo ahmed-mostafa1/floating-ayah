@@ -819,6 +819,48 @@ h2 {
   font-size: clamp(1.3rem, 4vw, 1.65rem);
 }
 
+/* ── Statistics panel ────────────────────────────────────────── */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 24px;
+  border-radius: 22px;
+}
+
+.stat-value {
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #e4c875;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f7f4ea;
+}
+
+.stat-hint {
+  font-size: 0.8rem;
+  color: #b4aa91;
+}
+
+@media (max-width: 820px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Shortcut hint ───────────────────────────────────────────── */
 
 .shortcut-hint {

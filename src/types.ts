@@ -11,6 +11,7 @@ export type AppSettings = {
   suppressDuringFullscreen: boolean;
   pauseUntil: PauseUntil;
   pauseExpiresAt: number;
+  showEnglish: boolean;
 };
 
 export type Ayah = {
@@ -25,4 +26,11 @@ export type Ayah = {
 export type AppState = {
   settings: AppSettings;
   currentAyah: Ayah;
+};
+
+export type StatsSummary = {
+  today: number;
+  lastWeek: number;
+  lastMonth: number;
+  allTime: number;
 };

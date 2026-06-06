@@ -5,6 +5,7 @@ import {
   getPreviousAyah,
   dismissNotification,
   resetNotificationTimeout,
+  recordAppearance,
 } from "./tauri";
 import { Notification } from "./Notification";
 import type { AppSettings, Ayah } from "./types";
@@ -45,7 +46,9 @@ export function NotificationWindow() {
     if (!ayah) return;
     startTransition(async () => {
       await resetNotificationTimeout();
-      setAyah(await getNextAyah(ayah));
+      const next = await getNextAyah(ayah);
+      setAyah(next);
+      await recordAppearance(next.surahId, next.ayahId);
     });
   }
 
@@ -53,7 +56,9 @@ export function NotificationWindow() {
     if (!ayah) return;
     startTransition(async () => {
       await resetNotificationTimeout();
-      setAyah(await getPreviousAyah(ayah));
+      const previous = await getPreviousAyah(ayah);
+      setAyah(previous);
+      await recordAppearance(previous.surahId, previous.ayahId);
     });
   }
 

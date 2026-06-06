@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { AppSettings, AppState, Ayah } from "./types";
+import type { AppSettings, AppState, Ayah, StatsSummary } from "./types";
 
 const mockAyahs: Ayah[] = [
   {
@@ -38,6 +38,7 @@ const mockState: AppState = {
     suppressDuringFullscreen: true,
     pauseUntil: "none",
     pauseExpiresAt: 0,
+    showEnglish: false,
   },
   currentAyah: mockAyahs[0],
 };
@@ -103,5 +104,18 @@ export async function dismissNotification(): Promise<void> {
 export async function resetNotificationTimeout(): Promise<void> {
   if (isTauri) {
     return invoke("reset_notification_timeout");
+  }
+}
+
+export async function getStats(): Promise<StatsSummary> {
+  if (isTauri) {
+    return invoke<StatsSummary>("get_stats");
+  }
+  return { today: 0, lastWeek: 0, lastMonth: 0, allTime: 0 };
+}
+
+export async function recordAppearance(surahId: number, ayahId: number): Promise<void> {
+  if (isTauri) {
+    return invoke("record_appearance", { surahId, ayahId });
   }
 }

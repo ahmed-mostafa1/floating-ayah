@@ -7,6 +7,7 @@ use tauri::{AppHandle, Emitter, LogicalPosition, Manager};
 use crate::{
     db::QuranDb,
     settings::{AppStore, AyahReference},
+    stats::StatsStore,
 };
 
 static NOTIFICATION_SEQUENCE: AtomicU64 = AtomicU64::new(0);
@@ -104,6 +105,10 @@ pub fn show_notification(app: &AppHandle) {
             db.ayah_by_reference(r.surah_id, r.ayah_id).ok()
         })
     };
+
+    if let Some(ayah) = &ayah_payload {
+        let _ = app.state::<StatsStore>().record(ayah);
+    }
 
     let _ = window.show();
     let _ = window.emit("notification-show", ayah_payload);

@@ -2,12 +2,14 @@
 
 mod db;
 mod settings;
+mod stats;
 mod timer;
 mod tray;
 
 use db::{Ayah, QuranDb};
 use serde::Serialize;
 use settings::{AppSettings, AppStore, AyahReference};
+use stats::{StatsStore, StatsSummary};
 use tauri::{AppHandle, Manager, State, WebviewWindowBuilder, WebviewUrl};
 
 const AUTOSTART_ARG: &str = "--hidden";
@@ -99,6 +101,22 @@ fn reset_notification_timeout(app: AppHandle) {
     timer::reset_notification_timeout(&app);
 }
 
+#[tauri::command]
+fn get_stats(stats: State<StatsStore>) -> Result<StatsSummary, String> {
+    stats.summary()
+}
+
+#[tauri::command]
+fn record_appearance(
+    db: State<QuranDb>,
+    stats: State<StatsStore>,
+    surah_id: u16,
+    ayah_id: u16,
+) -> Result<(), String> {
+    let ayah = db.ayah_by_reference(surah_id, ayah_id)?;
+    stats.record(&ayah)
+}
+
 fn sync_autostart(app: &AppHandle, enable: bool) {
     use tauri_plugin_autostart::ManagerExt;
     let manager = app.autolaunch();
@@ -131,8 +149,11 @@ fn main() {
                 .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
             let store = AppStore::open(app.handle())
                 .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+            let stats = StatsStore::open(app.handle())
+                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
             app.manage(db);
             app.manage(store);
+            app.manage(stats);
 
             // Pre-create hidden notification window — reused every reminder cycle
             WebviewWindowBuilder::new(
@@ -144,6 +165,7 @@ fn main() {
             .inner_size(366.0, 430.0)
             .decorations(false)
             .transparent(true)
+            .shadow(false)
             .always_on_top(true)
             .skip_taskbar(true)
             .focused(false)
@@ -197,6 +219,8 @@ fn main() {
             set_current_ayah,
             dismiss_notification,
             reset_notification_timeout,
+            get_stats,
+            record_appearance,
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Noor Remind");
